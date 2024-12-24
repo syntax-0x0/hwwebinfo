@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HWWebInfo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col items-center justify-center">
+    <div class="bg-gray-800 rounded-lg shadow-lg p-8 w-full max-w-4xl fade-in">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold mb-2">HWWebInfo</h1>
+            <p class="text-gray-300">Your system information at a glance</p>
+        </header>
+        <div>
+            <div class="flex justify-center space-x-4 mb-6">
+                <button onclick="showTab('cpu')" class="tab-btn bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-600 transition">CPU</button>
+                <button onclick="showTab('ram')" class="tab-btn bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-600 transition">RAM</button>
+                <button onclick="showTab('disk')" class="tab-btn bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-600 transition">Disk</button>
+                <button onclick="showTab('battery')" class="tab-btn bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-600 transition">Battery</button>
+                <button onclick="showTab('system')" class="tab-btn bg-gray-700 px-4 py-2 rounded-md hover:bg-gray-600 transition">System Info</button>
+            </div>
+            <div id="content" class="fade-in text-center text-gray-300">
+                <h2 class="text-2xl font-semibold mb-4">Welcome to HWWebInfo</h2>
+                <p class="text-lg">Click on a tab above to view detailed system information.</p>
+            </div>
+        </div>
+    </div>
+    <script>
+        let activeTab = null; // Track the currently active tab
+
+        async function fetchSystemInfo() {
+            const response = await fetch('/api/');
+            const data = await response.json();
+            window.systemInfo = data; // Cache data globally for tab switching
+            if (activeTab) {
+                showTab(activeTab); // Refresh only the active tab
+            }
+        }
+
+        function showTab(tab) {
+            const data = window.systemInfo;
+            const contentDiv = document.getElementById('content');
+            activeTab = tab; // Update the active tab
+
+            if (!data) {
+                contentDiv.innerHTML = '<p class="text-lg">Loading system information...</p>';
+                return;
+            }
+
+            const tabs = {
+                cpu: `
+                    <h3 class="text-2xl font-semibold mb-4">CPU</h3>
+                    <div class="bg-gray-700 p-4 rounded-md shadow-md">
+                        <p>Usage: ${data.cpu.usage_percent}%</p>
+                        <p>Frequency: ${data.cpu.frequency_mhz} MHz</p>
+                        <p>Temperature: ${data.cpu.temperature_celsius}°C</p>
+                    </div>
+                `,
+                ram: `
+                    <h3 class="text-2xl font-semibold mb-4">RAM</h3>
+                    <div class="bg-gray-700 p-4 rounded-md shadow-md">
+                        <p>Total: ${data.ram.total_gb} GB</p>
+                        <p>Used: ${data.ram.used_gb} GB</p>
+                        <p>Free: ${data.ram.free_gb} GB</p>
+                    </div>
+                `,
+                disk: `
+                    <h3 class="text-2xl font-semibold mb-4">Disk</h3>
+                    <div class="bg-gray-700 p-4 rounded-md shadow-md">
+                        <p>Total: ${data.disk.total_gb} GB</p>
+                        <p>Used: ${data.disk.used_gb} GB</p>
+                        <p>Free: ${data.disk.free_gb} GB</p>
+                    </div>
+                `,
+                battery: `
+                    <h3 class="text-2xl font-semibold mb-4">Battery</h3>
+                    <div class="bg-gray-700 p-4 rounded-md shadow-md">
+                        <p>Percentage: ${data.battery.percent}%</p>
+                        <p>Charging: ${data.battery.charging ? "Yes" : "No"}</p>
+                    </div>
+                `,
+                system: `
+                    <h3 class="text-2xl font-semibold mb-4">System Info</h3>
+                    <div class="bg-gray-700 p-4 rounded-md shadow-md">
+                        <p>OS: ${data.system_info.system}</p>
+                        <p>Node: ${data.system_info.node}</p>
+                        <p>Release: ${data.system_info.release}</p>
+                        <p>Machine: ${data.system_info.machine}</p>
+                        <p>Processor: ${data.system_info.processor}</p>
+                    </div>
+                `,
+            };
+
+            contentDiv.innerHTML = tabs[tab] || '<p class="text-lg">Information not available.</p>';
+        }
+
+        // Fetch information immediately and every 5 seconds
+        fetchSystemInfo();
+        setInterval(fetchSystemInfo, 1000);
+    </script>
+</body>
+</html>
